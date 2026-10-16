@@ -85,29 +85,26 @@
   table { border-collapse: separate; border-spacing: 0; width: 100%; }
   th, td { padding: 0; border-bottom: 1px solid var(--line); text-align: center; }
   tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
-  thead th { padding: 10px 6px 8px; min-width: 112px; font-weight: 700; vertical-align: bottom; }
+  thead th { padding: 8px 2px 6px; min-width: 56px; width: 56px; font-weight: 600; vertical-align: bottom; }
   th.kpi {
     position: sticky; left: 0; z-index: 2; background: var(--card);
     text-align: left; padding: 10px 12px; min-width: 128px; max-width: 128px;
     font-weight: 600; font-size: 0.93rem; border-right: 1px solid var(--line);
   }
   thead th.kpi { z-index: 3; color: var(--muted); font-weight: 600; }
-  th.instr, td.instr {
-    min-width: 270px; text-align: left; padding: 10px 14px; color: var(--muted);
-    font-size: 0.86rem; font-weight: 400; white-space: normal;
+  .datebox { position: relative; display: block; margin: 0 auto; width: 52px; }
+  .datebox span {
+    display: block; font-size: 0.72rem; color: var(--muted); background: var(--input);
+    border-radius: 6px; padding: 5px 0; text-align: center; font-weight: 500; font-variant-numeric: tabular-nums;
   }
-  thead th.instr { color: var(--muted); font-weight: 600; font-size: 0.93rem; }
-  .colhead { display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 6px; }
+  .datebox input[type="date"] {
+    position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px;
+  }
   .del {
-    border: 0; background: transparent; color: var(--muted); font-size: 1.15rem; line-height: 1;
-    width: 26px; height: 26px; border-radius: 50%;
+    display: block; margin: 2px auto 0; border: 0; background: transparent; color: var(--muted);
+    font-size: 1rem; line-height: 1; width: 24px; height: 22px; border-radius: 50%;
   }
   .del:hover { background: var(--input); color: var(--ink); }
-  input[type="date"] {
-    width: 100%; max-width: 124px; font: inherit; font-size: 0.78rem; color: var(--muted);
-    background: var(--input); border: 0; border-radius: 6px; padding: 4px 4px; text-align: center;
-    font-weight: 400;
-  }
   td.c { background: var(--input); transition: background .2s; }
   td.c.good { background: var(--good); }
   td.c.bad { background: var(--bad); }
@@ -115,11 +112,11 @@
   td.c.bad input { color: var(--bad-ink); }
   input.cell {
     width: 100%; border: 0; background: transparent; color: var(--ink);
-    font: inherit; font-size: 1.05rem; font-weight: 600; text-align: center;
-    padding: 13px 4px; font-variant-numeric: tabular-nums; min-width: 0;
+    font: inherit; font-size: 0.98rem; font-weight: 600; text-align: center;
+    padding: 13px 2px; font-variant-numeric: tabular-nums; min-width: 0;
   }
   input.cell::placeholder { color: var(--muted); opacity: .45; font-weight: 400; }
-  td.c { border-left: 2px solid var(--card); }
+  td.c { border-left: 2px solid var(--card); width: 56px; }
 
   .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 12px 4px 0; font-size: 0.85rem; color: var(--muted); }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -232,7 +229,7 @@
     return isNaN(n) ? null : n;
   }
   function fmt(n) { return n.toLocaleString('pt-BR', { maximumFractionDigits: 1 }); }
-  function dataCurta(iso) { var p = iso.split('-'); return p.length === 3 ? p[2] + '/' + p[1] : iso; }
+  function dataCurta(iso, ano) { var p = iso.split('-'); return p.length === 3 ? p[2] + '/' + p[1] + (ano ? '/' + p[0].slice(2) : '') : iso; }
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
 
   /* ---------- Tabela ---------- */
@@ -242,22 +239,20 @@
     var ms = ordenadas();
     var h = '<thead><tr><th class="kpi" scope="col">Indicador</th>';
     ms.forEach(function (m, i) {
-      h += '<th scope="col"><div class="colhead"><span>' + rotuloT(i) + '</span>' +
-           '<button class="del" data-del="' + m.id + '" aria-label="Remover medição ' + rotuloT(i) + '" title="Remover">×</button></div>' +
-           '<input type="date" data-date="' + m.id + '" value="' + esc(m.data) + '" aria-label="Data da medição ' + rotuloT(i) + '"></th>';
+      h += '<th scope="col"><label class="datebox"><span>' + dataCurta(m.data, true) + '</span>' +
+           '<input type="date" data-date="' + m.id + '" value="' + esc(m.data) + '" aria-label="Data da medição ' + (i + 1) + '"></label>' +
+           '<button class="del" data-del="' + m.id + '" aria-label="Remover medição de ' + dataCurta(m.data, true) + '" title="Remover">×</button></th>';
     });
-    h += '<th class="instr" scope="col">Instrução</th></tr></thead><tbody>';
+    h += '</tr></thead><tbody>';
     KPIS.forEach(function (k) {
       h += '<tr><th class="kpi" scope="row">' + k.nome + '</th>';
       ms.forEach(function (m, i) {
         var v = m.v[k.id];
         h += '<td class="c" data-td="' + m.id + '|' + k.id + '"><input class="cell" inputmode="decimal" autocomplete="off" placeholder="–" ' +
              'data-m="' + m.id + '" data-k="' + k.id + '" value="' + esc(v === undefined ? '' : v) + '" ' +
-             'aria-label="' + k.nome + ' em ' + rotuloT(i) + '"></td>';
+             'aria-label="' + k.nome + ' em ' + dataCurta(m.data, true) + '"></td>';
       });
-      h += '<td class="instr">' + (k.melhor === 'down'
-        ? 'Se reduz vs. medição anterior, fica em azul; senão, em vermelho.'
-        : 'Se aumenta vs. medição anterior, fica em azul; senão, em vermelho.') + '</td></tr>';
+      h += '</tr>';
     });
     h += '</tbody>';
     tabela.innerHTML = h;
